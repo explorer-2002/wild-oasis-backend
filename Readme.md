@@ -1,35 +1,8 @@
-Challenge 1: Build a Hotel Booking API 
-Create a RESTful API for a hotel room booking system with the following requirements:
-Required Endpoints:
-POST   /api/bookings        - Create a new booking
-GET    /api/bookings/:id    - Get booking details
-GET    /api/bookings        - List all bookings (with filters)
-PATCH  /api/bookings/:id    - Update booking
-DELETE /api/bookings/:id    - Cancel booking
+A Hotel Booking Admin Dashboard backend created using Express.js, validation with joi, authentication using OAuth 2.0 and Passport.js and express-session, File upload using multer.
 
-Business Rules:
-Check-in date must be before check-out date
-Cannot book a room that's already booked for overlapping dates
-Calculate total price: numberOfNights × roomPricePerNight
-Booking status can be: pending, confirmed, cancelled, completed
-Validate all inputs properly
-Sample Request Body:
-POST /api/bookings
-{
-  "roomId": "507f1f77bcf86cd799439011",
-  "guestName": "John Doe",
-  "guestEmail": "john@example.com",
-  "guestPhone": "+91-9876543210",
-  "checkInDate": "2025-10-20",
-  "checkOutDate": "2025-10-25",
-  "numberOfGuests": 2,
-  "specialRequests": "Late check-in preferred"
-}
+How to start the project
 
-What We're Looking For:
-Proper Express.js route structure
-Input validation (using Joi, express-validator, or custom)
-Error handling middleware
-MongoDB schema design (or explain your schema)
-Prevention of double booking
-Appropriate HTTP status codes
+1. Install dependencies - npm install
+2. Create.env and add your own env's ( you can check the code for which env's are used in project
+3. Setup OAuth on Google Cloud Console for your project, add Client_id and Client_secret so obtained to your env's
+4. Hit - npm run dev
