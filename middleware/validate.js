@@ -3,7 +3,11 @@ export const validate = (schema) => {
         const {error} = schema.validate(req.body, {abortEarly: false});
 
         if(error){
-            return next(error);
+            // return next(error);
+            return res.status(500).json({
+                success: false,
+                message: error
+            });
         }
 
         next();

@@ -31,6 +31,7 @@ export class BookingService {
     }
 
     async createBooking(bookingData) {
+        console.log("bookingData: ", bookingData);
         const { roomId, checkInDate, checkOutDate, numberOfGuests } = bookingData;
 
         console.log("model Room: ", this.Room);
@@ -96,6 +97,7 @@ export class BookingService {
 
         const skip = (page - 1) * limit;
 
+        console.log("Status: ", status);
         console.log("collection: ", this.Booking);
 
         const [bookings, total] = await Promise.all([

@@ -1,6 +1,14 @@
 import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema({
+    id: {
+        type:String,
+        required: true,
+        unique: true,
+        index: true,
+        sparse: true
+    },
+
     userName: {
         type: String,
         required: true
@@ -22,7 +30,11 @@ const userSchema = new mongoose.Schema({
 
     avatar: {
         type: String,
-    }
+    },
+
+    mobileNumber: {
+        type: String,
+    },
 });
 
 export const User = mongoose.model('User', userSchema);

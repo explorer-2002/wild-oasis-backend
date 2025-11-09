@@ -34,6 +34,18 @@ export const createBookingSchema = Joi.object({
             'number.max': 'Maximum 10 guests allowed'
         }),
 
+    totalPrice: Joi.number().integer().min(1000).max(100000).required()
+        .messages({
+            'number.min': 'Total price must be at least 1000',
+            'number.max': 'Total price should atmost be 100000'
+        }),
+
+    pricePerNight: Joi.number().integer().min(1000).max(10000).required()
+        .messages({
+            'number.min': 'At least 1000 price is required',
+            'number.max': 'Maximum 10000 price allowed'
+        }),
+
     specialRequests: Joi.string().max(200).allow('').optional()
 });
 

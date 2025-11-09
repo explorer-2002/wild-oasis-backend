@@ -4,6 +4,7 @@ import cors from 'cors';
 import { AppError, errorHandler } from './middleware/errorHandler.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import roomRoutes from './routes/roomRoutes.js';
+import userRoutes from './routes/userRoutes.js';
 
 import dotenv from 'dotenv';
 import { upload } from './upload.js';
@@ -16,6 +17,10 @@ import passport from 'passport';
 import session from 'express-session';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { User } from './models/Users.js';
+import rateLimit from 'express-rate-limit';
+import MongoStore from 'connect-mongo';
+import helmet from 'helmet';
+import csrf from 'csurf';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -23,11 +28,25 @@ const __dirname = dirname(__filename);
 dotenv.config();
 
 const app = express();
+const csrfProtection = csrf({ cookie: true });
+
+app.use(helmet());
+app.use(cors({
+    origin: process.env.ALLOWED_ORIGINS.split(','), // Your frontend URL
+    credentials: true // Allow credentials (cookies, authorization headers, etc.)
+}));
 
 app.use(session({
-    secret: "secret",
+    secret: process.env.EXPRESS_SESSION_SECRET,
     resave: false,
     saveUninitialized: true,
+    store: MongoStore.create({
+        mongoUrl: process.env.MONGO_DB_URI,
+        touchAfter: 24 * 3600, // Lazy session update (once per 24hrs)
+        crypto: {
+            secret: process.env.SESSION_STORE_SECRET
+        }
+    }),
     cookie: {
         secure: false, // Set to true in production with HTTPS
         httpOnly: true,
@@ -36,13 +55,14 @@ app.use(session({
     }
 }));
 
+app.use(csrfProtection);
 app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: 'http://localhost:5000/auth/google/callback'
+    callbackURL: `${process.env.API_URL}/auth/google/callback`
 },
     (accessToken, refreshToken, profile, done) => {
         return done(null, profile);
@@ -54,20 +74,24 @@ passport.deserializeUser((user, done) => done(null, user));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({
-    origin: 'http://localhost:5173', // Your frontend URL
-    credentials: true // Allow credentials (cookies, authorization headers, etc.)
-}));
 
-app.get('/auth/google', passport.authenticate('google', { scope: ["profile", "email"] }));
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    max: 5,
+    message: 'Too many login attempts'
+});
+
+app.use('/auth/google', authLimiter);
+app.get('/auth/google', passport.authenticate('google', { scope: ["profile", "email"], prompt: 'select_account'}));
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), async (req, res) => {
     console.log(req.user);
 
-    try{
-        const existingUser = await User.findOne({userEmail: req.user.emails[0].value});
+    try {
+        const existingUser = await User.findOne({ userEmail: req.user.emails[0].value });
 
-        if(!existingUser){
+        if (!existingUser) {
             await User.create({
+                id: req.user.id,
                 userName: req.user.displayName,
                 userEmail: req.user.emails[0].value,
                 role: 'user',
@@ -78,36 +102,38 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
         res.redirect('http://localhost:5173')
     }
 
-    catch(err){
+    catch (err) {
         res.redirect('http://localhost:5173/login');
     }
-
-    res.redirect('/profile');
 });
 
-app.get('/profile', (req, res) => {
-    // res.send(`Welcome ${req.user.displayName}`);
-    console.log(req.user);
-    res.redirect('http://localhost:5173');
-});
+app.get('/auth/status', async (req, res) => {
+    console.log("Auth status check: ", req.user);
 
-app.get('/auth/status', (req, res) => {
+    const user = await User.findOne({ id: req.user.id });
+
     if (req.isAuthenticated()) {
-        res.json({
+        return res.json({
             authenticated: true,
             user: {
-                id: req.user.id,
-                displayName: req.user.displayName,
-                email: req.user.email,
-                avatar: req.user.photos
+                id: user?.id ? user.id : req.user.id,
+                displayName: user?.userName ? user?.userName : req.user.displayName,
+                role: user?.role ? user.role : 'user',
+                email: user?.userEmail ? user.userEmail : req.user.emails[0].value,
+                phone: user?.mobileNumber ? user.mobileNumber : '',
+                avatar: user?.avatar ? user.avatar : req.user.photos[0].value
                 // Add any other user fields you want to expose
             }
         });
     } else {
-        res.json({
+        return res.json({
             authenticated: false
         });
     }
+});
+
+app.get('/auth/csrf-token', (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
 });
 
 app.get('/auth/logout', (req, res) => {
@@ -115,7 +141,7 @@ app.get('/auth/logout', (req, res) => {
     //     res.redirect('/');
     // });
 
-    req.logout((err) => {
+    return req.logout((err) => {
         if (err) {
             return res.status(500).json({ message: 'Logout failed' });
         }
@@ -129,8 +155,27 @@ app.get('/auth/logout', (req, res) => {
     });
 });
 
+app.get('/auth/health', async (req, res) => {
+    try {
+        // Check MongoDB connection
+        const dbState = mongoose.connection.readyState;
+
+        res.json({
+            status: 'ok',
+            database: dbState === 1 ? 'connected' : 'disconnected',
+            session: {
+                authenticated: req.isAuthenticated(),
+                store: 'mongodb'
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ status: 'error', error: err.message });
+    }
+});
+
 app.use('/api', bookingRoutes);
 app.use('/api', roomRoutes);
+app.use('/api', userRoutes);
 
 app.post('/upload', upload.single('image'), async (req, res, next) => {
     try {
@@ -192,10 +237,7 @@ app.use(errorHandler);
 
 const connectDb = async () => {
     try {
-        await mongoose.connect(process.env.MONGO_DB_URI, {
-            useNewUrlParser: true,
-            useUnifiedTopology: true
-        });
+        await mongoose.connect(process.env.MONGO_DB_URI);
 
         console.log("Mongo db connected");
     }
