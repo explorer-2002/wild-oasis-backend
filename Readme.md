@@ -1,10 +1,8 @@
-Backend for a hotel management admin dashboard created with Express.js with proper route structure, validation, authentication using OAuth 2.0, using multer for File Upload
-
-Created using Express.js
+A Hotel Booking Admin Dashboard backend created using Express.js, validation with joi, authentication using OAuth 2.0 and Passport.js and express-session, File upload using multer.
 
 How to start the project
 
-Install dependencies - npm i
-Define your ENV's
-Setup a new project for OAuth using google on Google Cloud Console
-Add Client_id and Client_Secret you got from the google console
+1. Install dependencies - npm install
+2. Create.env and add your own env's ( you can check the code for which env's are used in project
+3. Setup OAuth on Google Cloud Console for your project, add Client_id and Client_secret so obtained to your env's
+4. Hit - npm run dev
