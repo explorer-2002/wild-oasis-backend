@@ -5,6 +5,7 @@ import {validate} from '../middleware/validate.js';
 import { createBookingSchema } from '../validators/bookingValidator.js';
 import { Booking } from '../models/Bookings.js';
 import { Room } from '../models/Room.js';
+import sendSms from '../services/sendSms.js';
 
 const router = express.Router();
 
@@ -17,6 +18,8 @@ router.post('/bookings', validate(createBookingSchema), async (req, res, next) =
         console.log("Request body: ", req.body);
 
         const booking = await bookingService.createBooking(req.body);
+
+        sendSms(`Booking has been created for ${req.body.guestName} in Jain Hotel`);
 
         return res.status(201).json({
             success: true,
@@ -52,7 +55,7 @@ router.get('/bookings', async (req, res, next) => {
     try{
         console.log("Query params: ", req.query);
 
-        const result = await bookingService.getAllBookings({status: req.query.status});
+        const result = await bookingService.getAllBookings({...req.query});
 
         console.log("Bookings fetched: ", result);
         return res.status(200).json({

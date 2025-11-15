@@ -20,7 +20,7 @@ import { User } from './models/Users.js';
 import rateLimit from 'express-rate-limit';
 import MongoStore from 'connect-mongo';
 import helmet from 'helmet';
-import csrf from 'csurf';
+// import csrf from 'csurf';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -28,7 +28,7 @@ const __dirname = dirname(__filename);
 dotenv.config();
 
 const app = express();
-const csrfProtection = csrf({ cookie: true });
+// const csrfProtection = csrf({ cookie: true });
 
 app.use(helmet());
 app.use(cors({
@@ -55,7 +55,7 @@ app.use(session({
     }
 }));
 
-app.use(csrfProtection);
+// app.use(csrfProtection);
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -132,9 +132,9 @@ app.get('/auth/status', async (req, res) => {
     }
 });
 
-app.get('/auth/csrf-token', (req, res) => {
-    res.json({ csrfToken: req.csrfToken() });
-});
+// app.get('/auth/csrf-token', (req, res) => {
+//     res.json({ csrfToken: req.csrfToken() });
+// });
 
 app.get('/auth/logout', (req, res) => {
     // req.logout(() => {

@@ -27,6 +27,7 @@
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
     "path": "^0.12.7",
+    "twilio": "^5.10.5",
     "url": "^0.11.4"
   },
   "devDependencies": {

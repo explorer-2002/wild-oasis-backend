@@ -6,6 +6,7 @@ import path from 'path';
 import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { Image } from '../models/ImageModel.js';
+import sendSms from '../services/sendSms.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -39,7 +40,9 @@ router.post('/room', upload.single('image'), async (req, res, next) => {
             imageId: image._id
         });
 
-        res.json({
+        sendSms(`New room created numbered ${req.body.roomNumber}`);
+
+        return res.json({
             message: "success",
             data: room
         });
@@ -47,7 +50,7 @@ router.post('/room', upload.single('image'), async (req, res, next) => {
 
     catch (error) {
         console.log(error);
-        res.json({ error: error });
+        return res.json({ error: error });
     }
 });
 
