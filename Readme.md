@@ -6,4 +6,4 @@ How to start the project
 2. Create.env and add your own env's ( you can check the code for which env's are used in project )
 3. Setup OAuth on Google Cloud Console for your project, add Client_id and Client_secret so obtained to your env's
 4. Get Twilio credentials by creating a trial account
-4. Hit - npm run dev
+5. Hit - npm run dev
