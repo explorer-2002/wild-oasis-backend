@@ -84,7 +84,6 @@ const authLimiter = rateLimit({
 app.use('/auth/google', authLimiter);
 app.get('/auth/google', passport.authenticate('google', { scope: ["profile", "email"], prompt: 'select_account'}));
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), async (req, res) => {
-    console.log(req.user);
 
     try {
         const existingUser = await User.findOne({ userEmail: req.user.emails[0].value });
@@ -108,7 +107,6 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 });
 
 app.get('/auth/status', async (req, res) => {
-    console.log("Auth status check: ", req.user);
 
     const user = await User.findOne({ id: req.user.id });
 
@@ -187,8 +185,6 @@ app.post('/upload', upload.single('image'), async (req, res, next) => {
                 contentType: 'image/png'
             }
         }
-
-        console.log("Image uploaded");
 
         const image = new Image(obj);
         await image.save()

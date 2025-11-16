@@ -37,11 +37,8 @@ router.get('/user/:id', async (req, res, next) => {
 });
 
 router.patch('/user/:id', upload.single('avatar'), async (req, res, next) => {
-    console.log("Inside update user route");
 
     try {
-        console.log("Inside try block");
-
         const { id } = req.params;
 
         let updateData = req.body;

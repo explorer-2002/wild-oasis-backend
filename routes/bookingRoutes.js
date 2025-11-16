@@ -12,11 +12,7 @@ const router = express.Router();
 const bookingService = new BookingService(Booking, Room);
 
 router.post('/bookings', validate(createBookingSchema), async (req, res, next) => {
-    console.log("Inside booking route");
-
     try{
-        console.log("Request body: ", req.body);
-
         const booking = await bookingService.createBooking(req.body);
 
         sendSms(`Booking has been created for ${req.body.guestName} in Jain Hotel`);
@@ -53,11 +49,8 @@ router.get('/bookings/:id', async (req, res, next) => {
 
 router.get('/bookings', async (req, res, next) => {
     try{
-        console.log("Query params: ", req.query);
-
         const result = await bookingService.getAllBookings({...req.query});
 
-        console.log("Bookings fetched: ", result);
         return res.status(200).json({
             success: true,
             data: result.bookings,

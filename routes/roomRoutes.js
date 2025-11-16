@@ -15,9 +15,6 @@ const router = express.Router();
 
 router.post('/room', upload.single('image'), async (req, res, next) => {
     try {
-        console.log(req.body);
-        console.log("Received request");
-
         let obj = {
             name: req.body.roomNumber,
             desc: req.body.roomNumber,
@@ -26,8 +23,6 @@ router.post('/room', upload.single('image'), async (req, res, next) => {
                 contentType: 'image/png'
             }
         }
-
-        console.log("Image uploaded");
 
         const image = await Image.create(obj);
 
@@ -58,7 +53,6 @@ router.patch('/room/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const updateData = req.body;
-        console.log(req.file);
 
         const updatedRoom = await Room.findByIdAndUpdate(id, updateData, { new: true });
 

@@ -31,10 +31,7 @@ export class BookingService {
     }
 
     async createBooking(bookingData) {
-        console.log("bookingData: ", bookingData);
         const { roomId, checkInDate, checkOutDate, numberOfGuests } = bookingData;
-
-        console.log("model Room: ", this.Room);
 
         const room = await this.Room.findById(roomId);
 
@@ -69,7 +66,6 @@ export class BookingService {
         await booking.save();
 
         const populatedBooking = await booking.populate('roomId');
-        console.log(populatedBooking);
 
         return populatedBooking;
     }
@@ -96,9 +92,6 @@ export class BookingService {
         if (checkOutDate) query.checkOutDate = { $lte: new Date(checkOutDate) };
 
         const skip = (page - 1) * limit;
-
-        console.log("Status: ", status);
-        console.log("collection: ", this.Booking);
 
         const [bookings, total] = await Promise.all([
             this.Booking.find(query)
@@ -156,7 +149,6 @@ export class BookingService {
         Object.assign(booking, updateData);
         await booking.save();
         const populatedBooking = await booking.populate('roomId');
-        console.log('populatedBooking:', populatedBooking);
 
         return populatedBooking;
     }
