@@ -98,11 +98,11 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
             });
         }
 
-        res.redirect('http://localhost:5173')
+        res.redirect(process.env.ALLOWED_ORIGINS.split(',')[0]);
     }
 
     catch (err) {
-        res.redirect('http://localhost:5173/login');
+        res.redirect(`${process.env.ALLOWED_ORIGINS.split(',')[0]}/login`);
     }
 });
 
@@ -148,7 +148,7 @@ app.get('/auth/logout', (req, res) => {
                 return res.status(500).json({ message: 'Session destruction failed' });
             }
             res.clearCookie('connect.sid'); // Clear the session cookie
-            res.redirect('http://localhost:5173/login');
+            res.redirect(`${process.env.ALLOWED_ORIGINS.split(',')[0]}/login`);
         });
     });
 });
@@ -158,7 +158,7 @@ app.get('/auth/health', async (req, res) => {
         // Check MongoDB connection
         const dbState = mongoose.connection.readyState;
 
-        res.json({
+        return res.json({
             status: 'ok',
             database: dbState === 1 ? 'connected' : 'disconnected',
             session: {
@@ -167,7 +167,7 @@ app.get('/auth/health', async (req, res) => {
             }
         });
     } catch (err) {
-        res.status(500).json({ status: 'error', error: err.message });
+        return res.status(500).json({ status: 'error', error: err.message });
     }
 });
 
@@ -189,14 +189,14 @@ app.post('/upload', upload.single('image'), async (req, res, next) => {
         const image = new Image(obj);
         await image.save()
 
-        res.json({
+        return res.json({
             message: "success",
             data: obj
         });
     }
 
     catch (error) {
-        res.json({ error: error });
+        return res.json({ error: error });
     }
 });
 
@@ -218,7 +218,7 @@ app.get('/image/:id/download', async (req, res, next) => {
         res.setHeader('Content-Length', image.img.data.length);
 
         // Send the buffer
-        res.send(image.img.data);
+        return res.send(image.img.data);
 
     } catch (err) {
         next(err);
