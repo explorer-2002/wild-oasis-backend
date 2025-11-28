@@ -21,6 +21,7 @@ import rateLimit from 'express-rate-limit';
 import MongoStore from 'connect-mongo';
 import helmet from 'helmet';
 import './services/redisClient.js';
+import { logtail } from './logger.js';
 // import csrf from 'csurf';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -109,40 +110,58 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 
 app.get('/auth/status', async (req, res) => {
 
-    const existingUser = await User.findOne({ id: req.user.id });
-    let user = {};
+    try {
+        const existingUser = await User.findOne({ id: req.user.id });
+        let user = {};
 
-    if (existingUser) {
-        user = {
-            id: existingUser?.id,
-            displayName: existingUser?.userName,
-            role: existingUser?.role,
-            email: existingUser?.userEmail,
-            phone: existingUser?.mobileNumber,
-            avatar: existingUser?.avatar
+        if (existingUser) {
+            user = {
+                id: existingUser?.id,
+                displayName: existingUser?.userName,
+                role: existingUser?.role,
+                email: existingUser?.userEmail,
+                phone: existingUser?.mobileNumber,
+                avatar: existingUser?.avatar
+            }
         }
-    }
 
-    else {
-        user = {
-            id: req?.user?.id,
-            displayName: req?.user?.displayName,
-            role: 'user',
-            email: req?.user?.emails?.[0]?.value,
-            phone: '',
-            avatar: req?.user?.photos?.[0]?.value
+        else {
+            user = {
+                id: req?.user?.id,
+                displayName: req?.user?.displayName,
+                role: 'user',
+                email: req?.user?.emails?.[0]?.value,
+                phone: '',
+                avatar: req?.user?.photos?.[0]?.value
+            }
         }
-    }
 
-    if (req.isAuthenticated()) {
-        return res.json({
-            authenticated: true,
-            user
+        logtail.info("Log message with structured data.", {
+            message: "Auth status fetched",
+            data: user
         });
-    } else {
+
+        if (req.isAuthenticated()) {
+            return res.json({
+                authenticated: true,
+                user
+            });
+        } else {
+            return res.json({
+                authenticated: false
+            });
+        }
+    }
+
+    catch (err) {
+        logtail.info("Error in saving authentication status", {
+            message: `Failed to fetch auth status ${err?.message}`,
+            data: err
+        });
+
         return res.json({
             authenticated: false
-        });
+        })
     }
 });
 
@@ -266,5 +285,7 @@ connectDb().then(() => {
     app.listen(PORT, () => {
         console.log(`Server running on Port ${PORT}`);
     })
-})
+});
+
+logtail.flush();
 

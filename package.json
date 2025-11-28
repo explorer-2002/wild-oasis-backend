@@ -13,6 +13,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@logtail/node": "^0.5.6",
+    "@logtail/winston": "^0.5.6",
     "connect-mongo": "^5.1.0",
     "cors": "^2.8.5",
     "csurf": "^1.11.0",
@@ -30,7 +32,8 @@
     "path": "^0.12.7",
     "redis": "^5.9.0",
     "twilio": "^5.10.5",
-    "url": "^0.11.4"
+    "url": "^0.11.4",
+    "winston": "^3.18.3"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"
