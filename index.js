@@ -114,6 +114,11 @@ app.get('/auth/status', async (req, res) => {
         const existingUser = await User.findOne({ id: req?.user?.id });
         let user = {};
 
+         logtail.info("Request user data", {
+            message: "Req user data",
+            data: req?.user
+        });
+
         if (existingUser) {
             user = {
                 id: existingUser?.id,
