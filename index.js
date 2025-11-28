@@ -20,6 +20,7 @@ import { User } from './models/Users.js';
 import rateLimit from 'express-rate-limit';
 import MongoStore from 'connect-mongo';
 import helmet from 'helmet';
+import './services/redisClient.js';
 // import csrf from 'csurf';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -82,7 +83,7 @@ const authLimiter = rateLimit({
 });
 
 app.use('/auth/google', authLimiter);
-app.get('/auth/google', passport.authenticate('google', { scope: ["profile", "email"], prompt: 'select_account'}));
+app.get('/auth/google', passport.authenticate('google', { scope: ["profile", "email"], prompt: 'select_account' }));
 app.get('/auth/google/callback', passport.authenticate('google', { failureRedirect: '/' }), async (req, res) => {
 
     try {
@@ -108,20 +109,35 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 
 app.get('/auth/status', async (req, res) => {
 
-    const user = await User.findOne({ id: req.user.id });
+    const existingUser = await User.findOne({ id: req.user.id });
+    let user = {};
+
+    if (existingUser) {
+        user = {
+            id: existingUser?.id,
+            displayName: existingUser?.userName,
+            role: existingUser?.role,
+            email: existingUser?.userEmail,
+            phone: existingUser?.mobileNumber,
+            avatar: existingUser?.avatar
+        }
+    }
+
+    else {
+        user = {
+            id: req?.user?.id,
+            displayName: req?.user?.displayName,
+            role: 'user',
+            email: req?.user?.emails?.[0]?.value,
+            phone: '',
+            avatar: req?.user?.photos?.[0]?.value
+        }
+    }
 
     if (req.isAuthenticated()) {
         return res.json({
             authenticated: true,
-            user: {
-                id: user?.id ? user.id : req.user.id,
-                displayName: user?.userName ? user?.userName : req.user.displayName,
-                role: user?.role ? user.role : 'user',
-                email: user?.userEmail ? user.userEmail : req.user.emails[0].value,
-                phone: user?.mobileNumber ? user.mobileNumber : '',
-                avatar: user?.avatar ? user.avatar : req.user.photos[0].value
-                // Add any other user fields you want to expose
-            }
+            user
         });
     } else {
         return res.json({

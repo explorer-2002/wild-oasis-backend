@@ -7,6 +7,8 @@ import { dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { Image } from '../models/ImageModel.js';
 import sendSms from '../services/sendSms.js';
+import { client } from '../services/redisClient.js';
+// import { client } from '../services/redisClient.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -71,6 +73,13 @@ router.patch('/room/:id', async (req, res) => {
 
 router.get('/rooms', async (req, res) => {
     try {
+        const roomsExist = await client.exists('rooms');
+        if(roomsExist){
+            const cachedRooms = await client.get('rooms');
+            console.log('Rooms fetched from Redis cache');
+            return res.status(200).json(JSON.parse(cachedRooms));
+        }
+
         const roomsWithImages = await Room.aggregate([
             {
                 $lookup: {
@@ -100,26 +109,29 @@ router.get('/rooms', async (req, res) => {
                 : null
         }));
 
-        res.status(200).json(formatted);
+        await client.set('rooms', JSON.stringify(formatted));
+        console.log('Rooms cached in Redis');
+
+        return res.status(200).json(formatted);
     }
 
     catch (err) {
-        res.status(500).json({ message: "Error fetching rooms", error: err })
+        return res.status(500).json({ message: "Error fetching rooms", error: err });
     }
 })
 
 router.delete('/room/:id', async (req, res) => {
 
-    try{
-    const {id} = req.params;
+    try {
+        const { id } = req.params;
 
-    const deletedRoom = await Room.findByIdAndDelete(id);
+        const deletedRoom = await Room.findByIdAndDelete(id);
 
-    res.json({data: deletedRoom});
+        res.json({ data: deletedRoom });
     }
 
-    catch(err){
-        res.json({error: err});
+    catch (err) {
+        res.json({ error: err });
     }
 });
 
