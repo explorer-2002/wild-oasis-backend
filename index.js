@@ -111,7 +111,7 @@ app.get('/auth/google/callback', passport.authenticate('google', { failureRedire
 app.get('/auth/status', async (req, res) => {
 
     try {
-        const existingUser = await User.findOne({ id: req.user.id });
+        const existingUser = await User.findOne({ id: req?.user?.id });
         let user = {};
 
         if (existingUser) {
